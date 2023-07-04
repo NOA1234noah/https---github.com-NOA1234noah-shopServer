@@ -82,7 +82,9 @@ router.post("/", async (req, res) => {
     user.birth_date = Date.parse(user.birth_date);
     await user.save();
     user.password = "*****";
-    res.status(201).json(user);
+    
+    let token = createToken(user._id, user.role);
+    res.json({ token, user });
   }
   catch (err) {
     if (err.code == 11000) {
@@ -108,6 +110,9 @@ router.post("/login", async (req, res) => {
     if (!authPassword) {
       return res.status(401).json({ msg: "Password or email is worng ,code:2" });
     }
+    if(user.active==false){
+      return res.status(401).json({ msg: "Unauthorized user" });
+    }
     let token = createToken(user._id, user.role);
     console.log(user);
     res.json({ token, user });
@@ -125,7 +130,7 @@ router.patch("/changeRole/:userID", authAdmin, async (req, res) => {
   try {
     let userID = req.params.userID
     // TODO:לשנות לאדמין הראשי
-    if (userID == "649005f159a961a73ed8c7ea") {
+    if (userID == "649154ad5ce7a36137e5609c") {
       return res.status(401).json({ msg: "You cant change superadmin to user" });
 
     }
@@ -137,6 +142,27 @@ router.patch("/changeRole/:userID", authAdmin, async (req, res) => {
     res.status(500).json({ msg: "err", err })
   }
 })
+
+// router.patch("/active/:userID", authAdmin, async (req, res) => {
+//   if (!req.body.active) {
+//     return res.status(400).json({ msg: "Need to send active in body" });
+//   }
+
+//   try {
+//     let userID = req.params.userID
+//     // TODO:לשנות לאדמין הראשי
+//     if (userID == "649154ad5ce7a36137e5609c") {
+//       return res.status(401).json({ msg: "You cant change superadmin to not active" });
+
+//     }
+//     let data = await UserModel.updateOne({ _id: userID }, { active: req.body.active })
+//     res.json(data);
+//   }
+//   catch (err) {
+//     console.log(err)
+//     res.status(500).json({ msg: "err", err })
+//   }
+// })
 
 router.patch("/:id", async (req, res) => {
   let id = req.params.id;
@@ -156,9 +182,10 @@ router.patch("/:id", async (req, res) => {
 router.patch("/likes/add/:id", async (req, res) => {
   let id = req.params.id;
   console.log(req.body.likes);
+  const likes = req.body.likes[0];
   try {
     let gg = await UserModel.findByIdAndUpdate(id, {
-      $push:{'likes': req.body.likes }
+      $push:{'likes': likes }
     });
 
     res.status(201).json(gg);
@@ -170,10 +197,12 @@ router.patch("/likes/add/:id", async (req, res) => {
 router.patch("/likes/remove/:id", async (req, res) => {
   let id = req.params.id;
   console.log(req.body.likes);
+  
+  const likes = req.body.likes[0];
   try {
 
     let gg = await UserModel.findByIdAndUpdate(id, {
-      $pop: { 'likes': req.body.likes }
+      $pop: { 'likes': likes }
     });
 
     res.status(201).json(gg);
@@ -204,7 +233,7 @@ router.patch("/changeActive/:userID", authAdmin, async (req, res) => {
   try {
     let userID = req.params.userID
     //TODO:לא מאפשר ליוזר אדמין להפוך למשהו אחר/ כי הוא הסופר אדמין
-    if (userID == "649005f159a961a73ed8c7ea") {
+    if (userID == "649154ad5ce7a36137e5609c") {
       return res.status(401).json({ msg: "You cant change superadmin to user" });
 
     }
