@@ -1,6 +1,6 @@
 const { auth, authAdmin } = require("../middlewares/auth");
 
-const { OrderModel, orderValid } = require("../models/orderModel");
+const { OrderModel } = require("../models/orderModel");
 const express = require("express");
 const router = express.Router();
 
